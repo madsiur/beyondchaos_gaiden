@@ -1,6 +1,7 @@
 from randomtools.tablereader import (
     TableObject, get_global_label, tblpath, addresses, get_random_degree,
-    get_activated_patches, mutate_normal, shuffle_normal, write_patch)
+    get_activated_patches, mutate_normal, shuffle_normal, write_patch,
+    get_definition)
 from randomtools.utils import (
     classproperty, cached_property, get_snes_palette_transformer,
     read_multi, write_multi, utilrandom as random)
@@ -12,6 +13,7 @@ from os import path
 from time import time, sleep, gmtime
 from collections import Counter
 from itertools import combinations
+from pprint import pprint
 
 
 VERSION = 3
@@ -43,11 +45,19 @@ price_message_indexes = {
     #60000:  0xa66,
     }
 
+def get_byte_string_flags(strings, b):
+    s = []
+    if not b:
+        return s
+    for i in range(8):
+        if b & (1 << i):
+            s.append(strings[i])
+    return s
 
 def to_ascii(text):
     s = ""
     for c in text:
-        c = ord(c)
+        #c = ord(c)
         if 0x80 <= c <= 0x99:
             s += chr(ord('A') + c-0x80)
             pass
@@ -62,7 +72,7 @@ def to_ascii(text):
 
 def int_to_bytelist(value, length):
     value_list = []
-    for _ in xrange(length):
+    for _ in range(length):
         value_list.append(value & 0xFF)
         value >>= 8
     assert value == 0
@@ -477,12 +487,9 @@ class DialoguePtrObject(TableObject):
 class MonsterObject(TableObject):
     flag = 'm'
     flag_description = "monsters"
+    printable = "monsters"
     custom_random_enable = True
-
-    magic_mutate_bit_attributes = {
-        ("statuses", "immunities"): (0xFFFFFFFF, 0xFFFFFF),
-        ("absorb", "null", "weakness"): (0xFF, 0xFF, 0xFF),
-        }
+    magic_mutate_bit_attributes = {}
 
     mutate_attributes = {
         "speed": None,
@@ -490,7 +497,7 @@ class MonsterObject(TableObject):
         "hit": None,
         "evade": None,
         "mblock": None,
-        "def": None,
+        "defense": None,
         "mdef": None,
         "mpow": None,
         "hp": None,
@@ -501,7 +508,7 @@ class MonsterObject(TableObject):
         }
 
     randomselect_attributes = [
-        "speed", "attack", "hit", "evade", "mblock", "def", "mdef", "mpow",
+        "speed", "attack", "hit", "evade", "mblock", "defense", "mdef", "mpow",
         "hp", "xp", "gp", "level", "morph_id", "animation", "special",
         ]
 
@@ -579,9 +586,12 @@ class MonsterObject(TableObject):
         else:
             max_hp = 65536
 
-        monsters = [m for m in monsters if m.old_data['level'] > 0
-                    and m.old_data['hp'] < max_hp
-                    and "Event" not in m.name and set(m.name) != {'_'}]
+        if "ROTDS" in get_global_label():
+            monsters = [m for m in monsters if m.index not in MonsterObject.exclusions]
+        else:
+            monsters = [m for m in monsters if m.old_data['level'] > 0
+                        and m.old_data['hp'] < max_hp
+                        and "Event" not in m.name and set(m.name) != {'_'}]
 
         score_a = lambda m: (m.old_data['level'], m.true_hp_old,
                              len(m.ai_script), m.signature)
@@ -617,6 +627,20 @@ class MonsterObject(TableObject):
                 m._rank = -1
 
         return self.rank
+    
+    def define_attributes(self):
+        if "ROTDS" in get_global_label():
+            self.magic_mutate_bit_attributes = {
+                ("statuses", "immunities"): (0x07FFFFFF, 0xFFFFFF),
+                ("absorb", "null", "weakness"): (0xFF, 0xFF, 0xFF),
+                ("misc1", "misc2"): (0x70, 0xB7),
+                }
+        else:
+            self.magic_mutate_bit_attributes = {
+                ("statuses", "immunities"): (0xFFFFFFFF, 0xFFFFFF),
+                ("absorb", "null", "weakness"): (0xFF, 0xFF, 0xFF),
+                }
+
 
     def mutate(self):
         if self.rank < 0:
@@ -657,9 +681,54 @@ class MonsterObject(TableObject):
             self.xp = 65535
             self.gp = 65535
 
+    def print(self):
+        s = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+        s +=  "{0}. {1}\n".format(str(self.index), self.name.replace("_", " ").rstrip())
+        s += "/-----------------------------------\\\n"
+        s += "| HP: {0} | ATK: {1} | SPD: {2} |\n".format(str(self.hp).rjust(5, ' '), str(self.attack).rjust(4, ' '), str(self.speed).rjust(4, ' '))  
+        s += "| MP: {0} | DEF: {1} | HIT: {2} |\n".format(str(self.mp).rjust(5, ' '), str(self.defense).rjust(4, ' '), str(self.hit).rjust(4, ' ')) 
+        s += "| XP: {0} | MPOW: {1} | EVD: {2} |\n".format(str(self.xp).rjust(5, ' '), str(self.mpow).rjust(3, ' '), str(self.evade).rjust(4, ' '))
+        s += "| GP: {0} | MDEF: {1} | MBLK: {2} |\n".format(str(self.gp).rjust(5, ' '), str(self.mdef).rjust(3, ' '), str(self.mblock).rjust(3, ' '))
+        s += "\\-----------------------------------/\n"
+        l =  get_byte_string_flags(get_definition("elements"), self.weakness)
+        t =  "WEAK: {0}\n".format(", ".join(l)) if l else ""
+        s += t
+        l =  get_byte_string_flags(get_definition("elements"), self.absorb)
+        t =  "ABSORB: {0}\n".format(", ".join(l)) if l else ""
+        s += t
+        l =  get_byte_string_flags(get_definition("elements"), self.null)
+        t =  "NULLIFY: {0}\n".format(", ".join(l)) if l else ""
+        s += t
+        l =  get_byte_string_flags(get_definition("statuses_1"), self.statuses & 0x000000FF)
+        l += get_byte_string_flags(get_definition("statuses_2"), (self.statuses >> 8) & 0x0000FF)
+        l += get_byte_string_flags(get_definition("statuses_3_monster"), (self.statuses >> 16) & 0x00FF)
+        l += get_byte_string_flags(get_definition("statuses_4_monster"), (self.statuses >> 24) & 0xFF)
+        t =  "AUTO: {0}\n".format(", ".join(l)) if l else ""
+        s += t
+        l =  get_byte_string_flags(get_definition("statuses_1"), self.immunities & 0x0000FF)
+        l += get_byte_string_flags(get_definition("statuses_2"), (self.immunities >> 8) & 0x00FF)
+        l += get_byte_string_flags(get_definition("statuses_3_monster"), (self.immunities >> 16) & 0xFF)
+        t = "IMMUNE: {0}\n".format(", ".join(l)) if l else ""
+        s += t
+        l =  get_byte_string_flags(get_definition("misc_1_monster"), self.misc1)
+        l += get_byte_string_flags(get_definition("misc_2_monster"), self.misc2)
+        t =  "MISC: {0}\n".format(", ".join(l)) if l else ""
+        s += t
+        #loot = MonsterLootObject.get(self.index).loot
+        #t =  "Nothing, " if loot[0] == 0xFF else ItemNameObject.get(loot[0]).name
+        #t += "Nothing" if loot[1] == 0xFF else ItemNameObject.get(loot[1]).name
+        #s += "Common steal, Rare steal: {0}\n".format(t)
+        #t =  "Nothing, " if loot[2] == 0xFF else ItemNameObject.get(loot[2]).name
+        #t += "Nothing" if loot[3] == 0xFF else ItemNameObject.get(loot[3]).name
+        #s += "Common drop, Rare drop: {0}\n".format(t)
+        #l =  [i.name.replace("_", " ").strip() for i in MetamorphObject.get(self.metamorph).items]
+        #s += "Metamorph: {0}\n".format(", ".join(l))
+        return s
+
 
 class MonsterLootObject(TableObject):
     flag = 't'
+    flag_description = "Monster loots"
     custom_random_enable = True
 
     intershuffle_attributes = ["steal_item_ids", "drop_item_ids"]
@@ -900,6 +969,11 @@ class FormationObject(TableObject):
     def true_enemy_ids(self):
         eids = []
         for (i, eid) in enumerate(self.enemy_ids):
+            if "ROTDS" in get_global_label():
+                # special Aurora/S.Knight battle event
+                # that has a present 0xFF enemy
+                if eid == 0xFF and self.index == 485:
+                    continue
             if eid == 0xFF and not self.enemies_present & (1 << i):
                 continue
             if self.bossbyte & (1 << i):
@@ -911,6 +985,11 @@ class FormationObject(TableObject):
     def old_true_enemy_ids(self):
         eids = []
         for (i, eid) in enumerate(self.old_data['enemy_ids']):
+            if "ROTDS" in get_global_label():
+                # special Aurora/S.Knight battle event
+                # that has a present 0xFF enemy
+                if eid == 0xFF and self.index == 485:
+                    continue
             if eid == 0xFF and not self.old_data['enemies_present'] & (1 << i):
                 continue
             if self.old_data['bossbyte'] & (1 << i):
@@ -982,9 +1061,9 @@ class MonsterAIObject(TableObject):
             try:
                 numargs = self.AICODES[ord(value)]
                 args = f.read(numargs)
+                script.append(map(ord, value + args))
             except KeyError:
-                args = ""
-            script.append(map(ord, value + args))
+                script.append(ord(value))
             if ord(value) == 0xFF:
                 if seen:
                     break
@@ -2243,7 +2322,7 @@ fanatix_space_pointer = None
 
 def execute_fanatix_mode():
     if not FOOLS:
-        print "FANATIX MODE ACTIVATED"
+        print("FANATIX MODE ACTIVATED")
 
     for i in xrange(0x20):
         InitialMembitObject.get(i).membyte = 0xFF
@@ -3116,50 +3195,50 @@ def execute_fanatix_mode():
 
 
 if __name__ == "__main__":
-    try:
-        print ("You are using the Beyond Chaos Gaiden "
-               "randomizer version %s." % VERSION)
-        print
+    #try:
+    print ("You are using the Beyond Chaos Gaiden "
+            "randomizer version %s." % VERSION)
+    print
 
-        ALL_OBJECTS = [g for g in globals().values()
-                       if isinstance(g, type) and issubclass(g, TableObject)
-                       and g not in [TableObject]]
+    ALL_OBJECTS = [g for g in globals().values()
+                    if isinstance(g, type) and issubclass(g, TableObject)
+                    and g not in [TableObject]]
 
-        codes = {
-            "fanatix": ["fanatix"],
-            #"wildcommands": ["wildcommands"],
-            "easymodo": ["easymodo"],
-        }
+    codes = {
+        "fanatix": ["fanatix"],
+        #"wildcommands": ["wildcommands"],
+        "easymodo": ["easymodo"],
+    }
 
-        run_interface(ALL_OBJECTS, snes=True, codes=codes, custom_degree=True)
+    run_interface(ALL_OBJECTS, snes=True, codes=codes, custom_degree=True)
 
-        tm = gmtime(get_seed())
-        if tm.tm_mon == 4 and tm.tm_mday == 1:
-            activate_code("fanatix")
-            FOOLS = True
+    tm = gmtime(get_seed())
+    if tm.tm_mon == 4 and tm.tm_mday == 1:
+        activate_code("fanatix")
+        FOOLS = True
 
-        if "easymodo" in get_activated_codes():
-            "EASY MODE ACTIVATED"
+    if "easymodo" in get_activated_codes():
+        "EASY MODE ACTIVATED"
 
-        if "fanatix" in get_activated_codes():
-            if get_global_label() in ["FF6_NA_1.0", "FF6_NA_1.1"]:
-                write_patch(get_outfile(), "auto_learn_rage_patch.txt")
-            if "JP" in get_global_label():
-                write_patch(get_outfile(), "let_banon_equip_patch_jp.txt")
-                write_patch(get_outfile(), "auto_learn_rage_patch_jp.txt")
-            elif "SAFE_MODE" not in get_global_label():
-                write_patch(get_outfile(), "let_banon_equip_patch.txt")
-            execute_fanatix_mode()
+    if "fanatix" in get_activated_codes():
+        if get_global_label() in ["FF6_NA_1.0", "FF6_NA_1.1"]:
+            write_patch(get_outfile(), "auto_learn_rage_patch.txt")
+        if "JP" in get_global_label():
+            write_patch(get_outfile(), "let_banon_equip_patch_jp.txt")
+            write_patch(get_outfile(), "auto_learn_rage_patch_jp.txt")
+        elif "SAFE_MODE" not in get_global_label():
+            write_patch(get_outfile(), "let_banon_equip_patch.txt")
+        execute_fanatix_mode()
 
-        hexify = lambda x: "{0:0>2}".format("%x" % x)
-        numify = lambda x: "{0: >3}".format(x)
-        minmax = lambda x: (min(x), max(x))
+    hexify = lambda x: "{0:0>2}".format("%x" % x)
+    numify = lambda x: "{0: >3}".format(x)
+    minmax = lambda x: (min(x), max(x))
 
-        clean_and_write(ALL_OBJECTS)
-        rewrite_snes_meta("BCG-R", VERSION, lorom=False)
+    clean_and_write(ALL_OBJECTS)
+    rewrite_snes_meta("BCG-R", VERSION, lorom=False)
 
-        finish_interface()
+    finish_interface()
 
-    except Exception, e:
-        print "ERROR: %s" % e
-        raw_input("Press Enter to close this program.")
+    #except Exception, e:
+    #    print "ERROR: %s" % e
+    #    raw_input("Press Enter to close this program.")
