@@ -1,0 +1,28 @@
+AreaPackObject      area_pack_table.txt         f5600   436
+FormationObject     formation_table.txt         f6200   576
+FormationMetaObject formation_meta_table.txt    f5900   576
+FourPackObject      four_pack_table.txt         f4800   256
+ItemNameObject      item_name_table.txt         12b300  255
+LocationObject      location_table.txt          1a0000  436
+MetamorphObject     metamorph_table.txt         47f40   32
+MonsterObject       monster_table_rotds.txt     f0000   384
+MonsterAIObject     monster_ai_table.txt        45b400  384
+MonsterCtrlObject   monster_ctrl_table.txt      f3d00   384
+MonsterLootObject   monster_loot_table.txt      f3000   384
+MonsterNameObject   monster_name_table.txt      fc050   384
+MonsterRageObject   monster_rage_table.txt      f4600   255
+MonsterSketchObject monster_sketch_table.txt    f4300   384
+SpecialAnimObject   special_anim_table.txt      f37c0   384
+TwoPackObject       two_pack_table.txt          f5000   256
+VanillaObject       empty.txt                   0       1
+ZonePackPackObject  zone_pack_pack_table.txt    f5400   128
+$ai_scripts_address         460000
+.patch                      difficulty_patch_rotds.txt
+!exclusions                 exclusions_rotds.txt
+@elements                   elements_def_rotds.txt
+@statuses_1                 statuses_1_def_rotds.txt
+@statuses_2                 statuses_2_def_rotds.txt
+@statuses_3_monster         statuses_3_monster_def_rotds.txt
+@statuses_4_monster         statuses_4_monster_def_rotds.txt
+@misc_1_monster             misc_1_monster_def_rotds.txt
+@misc_2_monster             misc_2_monster_def_rotds.txt

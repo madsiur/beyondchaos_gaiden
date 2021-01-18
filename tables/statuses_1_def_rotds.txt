@@ -1,0 +1,8 @@
+Blind
+Zombie
+Poison
+Magitek
+Clear
+Pig
+Petrify
+KO'd

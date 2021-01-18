@@ -1,0 +1,18 @@
+# exclusion list for monster stats randomization
+
+# Esper
+277
+# Merchant
+314
+# S. Knight
+334
+# Kefka
+371
+# Officer
+373
+# Mr. Grimm
+376
+# Esper
+378
+# Sealed Gate
+379

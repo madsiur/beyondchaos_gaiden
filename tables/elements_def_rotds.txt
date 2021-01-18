@@ -1,0 +1,8 @@
+Fire
+Ice
+Lightning
+Poison
+Wind
+Holy
+Earth
+Water

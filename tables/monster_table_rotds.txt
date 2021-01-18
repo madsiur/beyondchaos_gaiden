@@ -1,0 +1,23 @@
+speed,1
+attack,1
+hit,1
+evade,1
+mblock,1
+defense,1
+mdef,1
+mpow,1
+hp,2
+mp,2
+xp,2
+gp,2
+level,1
+morph_id,1
+misc1,bit:dies_zero_mp m11 no_name no_death_from_id is_humanoid is_dragon crit_imp is_undead
+misc2,bit:is_difficult_to_run attack_first block_suplex is_inescapable cant_be_scanned cant_be_sketched m26 cant_be_controlled
+immunities,3
+absorb,1
+null,1
+weakness,1
+animation,1
+statuses,4
+special,1

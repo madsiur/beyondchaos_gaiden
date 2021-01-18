@@ -1,0 +1,8 @@
+Float
+Regen
+Slow
+Haste
+Stop
+Shell
+Protect
+Reflect

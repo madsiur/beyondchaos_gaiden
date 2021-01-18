@@ -1,0 +1,1 @@
+MonsterObject           monster_exclusions_rotds.txt
