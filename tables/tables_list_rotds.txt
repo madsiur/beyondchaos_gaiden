@@ -1,0 +1,33 @@
+EquipabilityObject      empty.txt                       0       1
+EquipmentStatsObject    empty.txt                       0       1   
+JunctionObject          empty.txt                       0       1
+MusicObject             empty.txt                       0       1
+VanillaObject           empty.txt                       0       1
+AreaPackObject          struct_area_pack.txt            f5600   436
+CharacterObject         struct_character.txt            2d7ca0  64
+ChestObject             struct_chest.txt                50e000  436 pointed 50e400  2
+CmdChangeFBObject       struct_cmd_change.txt           36198   5
+CmdChangeTBObject       struct_cmd_change.txt           3619d   5
+ColosseumObject         struct_colosseum.txt            1fb600  255
+DungeonRateObject       struct_encounter_rate.txt       c2bf    16
+FormationObject         struct_formation.txt            f6200   576
+FormationMetaObject     struct_formation_meta.txt       f5900   576
+FourPackObject          struct_four_pack.txt            f4800   256
+ZonePackPackObject      struct_zone_pack_pack.txt       f5400   128
+ItemObject              struct_item.txt                 185000  255
+ItemNameObject          struct_item_name.txt            12b300  255
+LocationObject          struct_location.txt             1a0000  436
+MetamorphObject         struct_metamorph.txt            47f40   32
+MonsterObject           struct_monster_rotds.txt        f0000   384
+MonsterAIObject         struct_monster_ai.txt           45b400  384
+MonsterCtrlObject       struct_monster_ctrl.txt         f3d00   384
+MonsterLootObject       struct_monster_loot.txt         f3000   384
+MonsterNameObject       struct_monster_name.txt         fc050   384
+MonsterRageObject       struct_monster_rage.txt         f4600   255
+MonsterSketchObject     struct_monster_sketch.txt       f4300   384
+OverworldRateObject     struct_encounter_rate.txt       c29f    16
+ShopObject              struct_shop.txt                 47ac0   86
+SpecialAnimObject       struct_special_anim.txt         f37c0   384
+TwoPackObject           struct_two_pack.txt             f5000   256 
+$ai_scripts_address     460000
+.patch                  difficulty_patch_rotds.txt
