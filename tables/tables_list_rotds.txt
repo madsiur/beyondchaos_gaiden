@@ -30,4 +30,4 @@ ShopObject              struct_shop.txt                 47ac0   86
 SpecialAnimObject       struct_special_anim.txt         f37c0   384
 TwoPackObject           struct_two_pack.txt             f5000   256 
 $ai_scripts_address     460000
-.patch                  difficulty_patch_rotds.txt
+.patch                  patch_difficulty_rotds.txt

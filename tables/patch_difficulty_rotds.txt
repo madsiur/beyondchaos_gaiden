@@ -1,0 +1,16 @@
+# skip intro and difficulty choice
+318590:B2 88 9D 28          # jump to intro selection screen      
+:FE                         # return
+
+# make NG+ NPC say normal dialogue
+351E80:4B 5F 02             # dialogue call 
+:FE                         # return
+
+# skip end of game NG+
+33FF94:B2 80 FF 29          # skip
+:FE                         # return
+
+# difficulty choice NPC dialogue removal
+313038:FE                   # return
+31C983:FE                   # return
+32D303:FE                   # return
