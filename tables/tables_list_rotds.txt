@@ -1,10 +1,9 @@
 EquipabilityObject      empty.txt                       0       1
-EquipmentStatsObject    empty.txt                       0       1   
-JunctionObject          empty.txt                       0       1
-MusicObject             empty.txt                       0       1
+EquipmentStatsObject    empty.txt                       0       1
 VanillaObject           empty.txt                       0       1
 AreaPackObject          struct_area_pack.txt            f5600   436
 CharacterObject         struct_character.txt            2d7ca0  64
+CharNameObject          struct_char_name.txt            478c0   64
 ChestObject             struct_chest.txt                50e000  436 pointed 50e400  2
 CmdChangeFBObject       struct_cmd_change.txt           36198   5
 CmdChangeTBObject       struct_cmd_change.txt           3619d   5
@@ -25,9 +24,8 @@ MonsterLootObject       struct_monster_loot.txt         f3000   384
 MonsterNameObject       struct_monster_name.txt         fc050   384
 MonsterRageObject       struct_monster_rage.txt         f4600   255
 MonsterSketchObject     struct_monster_sketch.txt       f4300   384
-OverworldRateObject     struct_encounter_rate.txt       c29f    16
 ShopObject              struct_shop.txt                 47ac0   86
-SpecialAnimObject       struct_special_anim.txt         f37c0   384
+SkillObject             struct_skill.txt                46ac0   255
 TwoPackObject           struct_two_pack.txt             f5000   256 
 $ai_scripts_address     460000
-.patch                  patch_difficulty_rotds.txt
+.patch                  patch_rotds_difficulty.txt
