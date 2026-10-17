@@ -24,6 +24,12 @@ Input a numerical seed value here, or leave it blank if you don't care.
 
 Right now only the `m` flag has been tested for the RotDS hack. Use other flags or the "randomize all" option at your own risk.
 
+### Codes
+
+You can enter codes when you enter flags. For example, `m printme` would randomize monsters and activate the `printme` code. These are the currently available codes:
+
+`printme`   Produce text files of the printable objects in the `printme` directory.
+
 ### Randomness
 The "randomness" option controls how extreme the randomizations are. At 0.0, almost nothing will be randomized. At 1.0, enemies in the starting area will most likely have boss stats. I suggest leaving it at the default setting of 0.5 for your first run. It is possible to use different settings for different flags. Type "custom" to enable more detailed randomness settings. This is useful, for example, when you want to find high-level gear without fighting high-level enemies.
 

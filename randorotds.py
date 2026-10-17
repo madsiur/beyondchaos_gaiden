@@ -16,6 +16,10 @@ from itertools import combinations
 from os import path
 from traceback import format_exc
 
+from printme import (get_byte_string_flags, STATUS_ROTDS_1, STATUS_ROTDS_2,
+                     STATUS_ROTDS_MONSTER_3, STATUS_ROTDS_MONSTER_4, ELEMENTS_ROTDS,
+                     MISC_ROTDS_MONSTER_1, MISC_ROTDS_MONSTER_2)
+
 
 VERSION = "7.4"
 ALL_OBJECTS = None
@@ -87,6 +91,7 @@ class MonsterObject(TableObject):
     flag_description = 'monsters'
     custom_random_enable = True
     custom_difficulty_enable = False
+    _printme = 'monsters'
 
     magic_mutate_bit_attributes = {
         ('statuses', 'immunities'): (0xFFFFFFFF, 0xFFFFFF),
@@ -99,7 +104,7 @@ class MonsterObject(TableObject):
         'hit': None,
         'evade': None,
         'mblock': None,
-        'def': None,
+        'defense': None,
         'mdef': None,
         'mpow': None,
         'hp': None,
@@ -110,7 +115,7 @@ class MonsterObject(TableObject):
         }
 
     randomselect_attributes = [
-        'speed', 'attack', 'hit', 'evade', 'mblock', 'def', 'mdef', 'mpow',
+        'speed', 'attack', 'hit', 'evade', 'mblock', 'defense', 'mdef', 'mpow',
         'hp', 'xp', 'gp', 'level', 'morph_id', 'animation', 'special',
         ]
 
@@ -389,7 +394,7 @@ class MonsterObject(TableObject):
             difficulty = self.random_difficulty
 
         negative_attrs = ['speed', 'attack', 'hit', 'evade', 'mblock',
-                          'def', 'mdef', 'mpow', 'hp', 'mp', 'level']
+                          'defense', 'mdef', 'mpow', 'hp', 'mp', 'level']
         positive_attrs = ['xp', 'gp']
 
         for diffattr in positive_attrs + negative_attrs:
@@ -446,6 +451,49 @@ class MonsterObject(TableObject):
                 self.statuses ^= self.REFLECT
                 assert not self.statuses & self.REFLECT
 
+    def printme(self):
+        s = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+        s +=  "{0}. {1}\n".format(str(self.index), self.name.replace("_", " ").rstrip())
+        s += "/-----------------------------------\\\n"
+        s += "| HP: {0} | ATK: {1} | SPD: {2} |\n".format(str(self.hp).rjust(5, ' '), str(self.attack).rjust(4, ' '), str(self.speed).rjust(4, ' '))  
+        s += "| MP: {0} | DEF: {1} | HIT: {2} |\n".format(str(self.mp).rjust(5, ' '), str(self.defense).rjust(4, ' '), str(self.hit).rjust(4, ' ')) 
+        s += "| XP: {0} | MPOW: {1} | EVD: {2} |\n".format(str(self.xp).rjust(5, ' '), str(self.mpow).rjust(3, ' '), str(self.evade).rjust(4, ' '))
+        s += "| GP: {0} | MDEF: {1} | MBLK: {2} |\n".format(str(self.gp).rjust(5, ' '), str(self.mdef).rjust(3, ' '), str(self.mblock).rjust(3, ' '))
+        s += "\\-----------------------------------/\n"
+        l =  get_byte_string_flags(ELEMENTS_ROTDS, self.weakness)
+        t =  "WEAK: {0}\n".format(", ".join(l)) if l else ""
+        s += t
+        l =  get_byte_string_flags(ELEMENTS_ROTDS, self.absorb)
+        t =  "ABSORB: {0}\n".format(", ".join(l)) if l else ""
+        s += t
+        l =  get_byte_string_flags(ELEMENTS_ROTDS, self.null)
+        t =  "NULLIFY: {0}\n".format(", ".join(l)) if l else ""
+        s += t
+        l =  get_byte_string_flags(STATUS_ROTDS_1, self.statuses & 0x000000FF)
+        l += get_byte_string_flags(STATUS_ROTDS_2, (self.statuses >> 8) & 0x0000FF)
+        l += get_byte_string_flags(STATUS_ROTDS_MONSTER_3, (self.statuses >> 16) & 0x00FF)
+        l += get_byte_string_flags(STATUS_ROTDS_MONSTER_4, (self.statuses >> 24) & 0xFF)
+        t =  "AUTO: {0}\n".format(", ".join(l)) if l else ""
+        s += t
+        l =  get_byte_string_flags(STATUS_ROTDS_1, self.immunities & 0x0000FF)
+        l += get_byte_string_flags(STATUS_ROTDS_2, (self.immunities >> 8) & 0x00FF)
+        l += get_byte_string_flags(STATUS_ROTDS_MONSTER_3, (self.immunities >> 16) & 0xFF)
+        t = "IMMUNE: {0}\n".format(", ".join(l)) if l else ""
+        s += t
+        l =  get_byte_string_flags(MISC_ROTDS_MONSTER_1, self.misc1)
+        l += get_byte_string_flags(MISC_ROTDS_MONSTER_2, self.misc2)
+        t =  "MISC: {0}\n".format(", ".join(l)) if l else ""
+        s += t
+        steals = MonsterLootObject.get(self.index).steals
+        names = ", ".join(set(obj.name.replace("_", " ").strip() for obj in steals)) if steals else "Nothing" 
+        s += "Steal: {0}\n".format(names)
+        drops = MonsterLootObject.get(self.index).drops
+        names = ", ".join(set(obj.name.replace("_", " ").strip() for obj in drops)) if drops else "Nothing"   
+        s += "Drop: {0}\n".format(names)
+        names =  ", ".join(obj.name.replace("_", " ").strip() for obj in self.metamorph.items) if self.metamorph.items else "Nothing"
+        s += "Metamorph: {0}\n".format(names)
+        return s
+
 
 class MonsterNameObject(EncodeDecodeMixin):
     @property
@@ -495,13 +543,16 @@ class MonsterLootObject(TableObject):
         return self.monster.is_farmable
 
     @property
-    def loot(self):
-        return [ItemObject.get(i)
-                for i in self.steal_item_ids + self.drop_item_ids if i < 0xFF]
+    def steals(self):
+        return [ItemObject.get(i) for i in self.steal_item_ids if i < 0xFF]
 
     @property
     def drops(self):
         return [ItemObject.get(i) for i in self.drop_item_ids if i < 0xFF]
+
+    @property
+    def loot(self):
+        return [ItemObject.get(i) for i in self.steal_item_ids + self.drop_item_ids if i < 0xFF]
 
     @property
     def rank(self):
@@ -2258,6 +2309,25 @@ def handle_exhirom():
         f.write(block)
 
 
+def print_all(object_list):
+    from os import mkdir
+    PRINTME_DIRECTORY = 'printme'
+    try:
+        mkdir(PRINTME_DIRECTORY)
+    except FileExistsError:
+        pass
+    printme_objects = [o for o in object_list if hasattr(o, '_printme')]
+    for obj in printme_objects:
+        name = obj._printme
+        print(f"Exporting {name}")
+        fn = path.join(PRINTME_DIRECTORY, f"{name}.txt")
+        s = ''
+        for instance in obj.every:
+            s += instance.printme()
+            s += '\n'
+        with open(fn, 'w+') as f:
+            f.write(s)
+
 def export_all(object_list):
     from os import mkdir
     import json
@@ -2302,13 +2372,18 @@ if __name__ == '__main__':
                        if isinstance(g, type) and issubclass(g, TableObject)
                        and g not in [TableObject]]
 
-        codes = {}
+        codes = { 
+            'printme':      ['printme']
+        }
 
         run_interface(ALL_OBJECTS, snes=True, codes=codes,
                       custom_degree=True, custom_difficulty=True)
 
         if 'export' in get_activated_codes():
             export_all(ALL_OBJECTS)
+
+        if 'printme' in get_activated_codes():
+            print_all(ALL_OBJECTS)
 
         for code in sorted(get_activated_codes()):
             print('Code "%s" activated.' % code)

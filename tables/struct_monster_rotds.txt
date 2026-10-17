@@ -3,7 +3,7 @@ attack,1
 hit,1
 evade,1
 mblock,1
-def,1
+defense,1
 mdef,1
 mpow,1
 hp,2
